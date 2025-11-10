@@ -2,6 +2,8 @@ const express = require("express");
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const userRouter = express.Router();
+const jwt =  require('jsonwebtoken');
+const isAuth = require("../middlewares/authMiddleware");
 
 userRouter.post("/register", async (req, res) => {
   try {
@@ -44,9 +46,15 @@ userRouter.post("/login", async (req, res) => {
             message: "Invalid Password",
         });
     }
+
+    const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET, {expiresIn: '30d'})
+
+    res.cookie('jwt_token', token, { httpOnly: true });
+
     res.send({
         success: true,
         message: "User Logged In Successfully",
+        user: user
     });
   } catch (error) {
     res.status(500).json({
@@ -54,6 +62,19 @@ userRouter.post("/login", async (req, res) => {
     });
   }
 });
+
+userRouter.get('/current-user', isAuth, async(req, res) => {
+    const userId = req.userId;
+  if (userId === undefined) {
+    return res.status(401).json({ message: "Not authorized , no token" });
+  }
+  try {
+    const verifiedUser = await User.findById(userId).select("-password");
+    res.json(verifiedUser);
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  } 
+})  
 
 
 module.exports = userRouter;
