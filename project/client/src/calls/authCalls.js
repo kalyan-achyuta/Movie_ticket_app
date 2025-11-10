@@ -22,11 +22,12 @@ export const login = async(values) => {
         return error;
     }
 }
-export const getCurrentUser = async(values) => {
+export const getCurrentUser = async() => {
     try {
-       const resposne = await api.post('/api/auth/current-user', {withCredentials: true});
+       const resposne = await api.get('/api/auth/current-user', {withCredentials: true});
        return resposne.data;
     } catch (error) {
-        return error;
+         console.log('Error getting current user:', error.response?.data || error.message)
+        return null
     }
 }
